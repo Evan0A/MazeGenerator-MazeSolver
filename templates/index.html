@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maze Generator & Solver</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Maze Generator & Solver</h1>
+        
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="canvas-container">
+                    <canvas id="mazeCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8 mx-auto">
+                <div class="d-flex gap-2 justify-content-center">
+                    <div class="input-group" style="max-width: 200px;">
+                        <span class="input-group-text">Size</span>
+                        <input type="number" class="form-control" id="mazeSize" value="15" min="5" max="50">
+                    </div>
+                    <button class="btn btn-secondary" id="generateMaze">Generate New Maze</button>
+                    <button class="btn btn-primary" id="startSolver">Start Solver</button>
+                    <button class="btn btn-danger" id="resetSolver">Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/maze.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/solver.js') }}"></script>
+</body>
+</html>
