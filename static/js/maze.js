@@ -1,9 +1,10 @@
 class Maze {
-    constructor(size) {
-        this.size = size;
-        this.grid = Array(size).fill().map(() => Array(size).fill(1));
+    constructor(size, difficulty = 'medium') {
+        this.size = this.adjustSizeForDifficulty(size, difficulty);
+        this.difficulty = difficulty;
+        this.grid = Array(this.size).fill().map(() => Array(this.size).fill(1));
         const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
-        this.cellSize = Math.floor(maxSize / size);
+        this.cellSize = Math.floor(maxSize / this.size);
         this.canvas = document.getElementById('mazeCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.setCanvasSize();
@@ -11,10 +12,20 @@ class Maze {
 
         window.addEventListener('resize', () => {
             const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
-            this.cellSize = Math.floor(maxSize / size);
+            this.cellSize = Math.floor(maxSize / this.size);
             this.setCanvasSize();
             this.draw();
         });
+    }
+
+    adjustSizeForDifficulty(baseSize, difficulty) {
+        const adjustments = {
+            'easy': 0,
+            'medium': 2,
+            'hard': 4,
+            'expert': 6
+        };
+        return baseSize + (adjustments[difficulty] || 0);
     }
 
     setCanvasSize() {
@@ -22,6 +33,32 @@ class Maze {
         this.canvas.width = this.size * this.cellSize + padding;
         this.canvas.height = this.size * this.cellSize + padding;
         this.offset = padding / 2;
+    }
+
+    getDifficultyParams() {
+        const params = {
+            'easy': {
+                branchingProb: 0.2,
+                maxDeadEnds: 2,
+                straightPathProb: 0.7
+            },
+            'medium': {
+                branchingProb: 0.4,
+                maxDeadEnds: 4,
+                straightPathProb: 0.5
+            },
+            'hard': {
+                branchingProb: 0.6,
+                maxDeadEnds: 6,
+                straightPathProb: 0.3
+            },
+            'expert': {
+                branchingProb: 0.8,
+                maxDeadEnds: 8,
+                straightPathProb: 0.1
+            }
+        };
+        return params[this.difficulty] || params['medium'];
     }
 
     generate() {
@@ -44,7 +81,6 @@ class Maze {
 
         // Ensure path to exit
         if (!this.validPath.has(`${this.size-2},${this.size-2}`)) {
-            // Create a direct path to exit if needed
             let x = this.size - 2;
             let y = this.size - 2;
             while (!this.validPath.has(`${y},${x}`)) {
@@ -54,16 +90,57 @@ class Maze {
                 else if (y > 1) y--;
             }
         }
+
+        // Add additional paths and dead ends based on difficulty
+        this.addComplexity();
+    }
+
+    addComplexity() {
+        const params = this.getDifficultyParams();
+        let deadEnds = 0;
+
+        for (let y = 2; y < this.size - 2; y += 2) {
+            for (let x = 2; x < this.size - 2; x += 2) {
+                if (this.grid[y][x] === 1 && Math.random() < params.branchingProb) {
+                    if (deadEnds < params.maxDeadEnds) {
+                        this.createDeadEnd(x, y);
+                        deadEnds++;
+                    }
+                }
+            }
+        }
+    }
+
+    createDeadEnd(x, y) {
+        const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+        this.shuffleArray(directions);
+
+        for (let [dy, dx] of directions) {
+            const newY = y + dy;
+            const newX = x + dx;
+            const midY = y + dy/2;
+            const midX = x + dx/2;
+
+            if (this.isValid(newY, newX) && this.grid[newY][newX] === 0) {
+                this.grid[y][x] = 0;
+                this.grid[midY][midX] = 0;
+                break;
+            }
+        }
     }
 
     carvePassages(x, y) {
         this.grid[y][x] = 0;
         this.validPath.add(`${y},${x}`);
 
-        // Prioritize direction towards exit
         let directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
-        if (x < this.size - 2) {
-            // Prioritize moving right and down if we're far from the exit
+        const params = this.getDifficultyParams();
+
+        // Adjust direction priorities based on difficulty
+        if (Math.random() > params.straightPathProb) {
+            this.shuffleArray(directions);
+        } else {
+            // Prioritize moving towards exit
             directions.sort((a, b) => {
                 const [dy1, dx1] = a;
                 const [dy2, dx2] = b;
@@ -72,14 +149,12 @@ class Maze {
                 return distToExit1 - distToExit2;
             });
         }
-        this.shuffleArray(directions);
 
         for (let [dy, dx] of directions) {
             const newY = y + dy;
             const newX = x + dx;
 
             if (this.isValid(newY, newX) && this.grid[newY][newX] === 1) {
-                // Create path between cells
                 this.grid[y + dy/2][x + dx/2] = 0;
                 this.validPath.add(`${y + dy/2},${x + dx/2}`);
                 this.carvePassages(newX, newY);
@@ -192,14 +267,16 @@ class Maze {
 let maze;
 document.addEventListener('DOMContentLoaded', () => {
     const size = parseInt(document.getElementById('mazeSize').value);
-    maze = new Maze(size);
+    const difficulty = document.getElementById('mazeDifficulty').value;
+    maze = new Maze(size, difficulty);
     window.maze = maze;
     maze.generate();
     maze.draw();
 
     document.getElementById('generateMaze').addEventListener('click', () => {
         const size = parseInt(document.getElementById('mazeSize').value);
-        maze = new Maze(size);
+        const difficulty = document.getElementById('mazeDifficulty').value;
+        maze = new Maze(size, difficulty);
         window.maze = maze;
         maze.generate();
         maze.draw();

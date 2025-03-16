@@ -21,11 +21,23 @@
 
         <div class="row mt-4">
             <div class="col-md-8 mx-auto">
-                <div class="d-flex gap-2 justify-content-center flex-wrap">
+                <div class="d-flex gap-2 justify-content-center flex-wrap mb-3">
                     <div class="input-group" style="max-width: 200px;">
                         <span class="input-group-text">Size</span>
                         <input type="number" class="form-control" id="mazeSize" value="15" min="5" max="50">
                     </div>
+                    <div class="input-group" style="max-width: 200px;">
+                        <span class="input-group-text">Difficulty</span>
+                        <select class="form-select" id="mazeDifficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                            <option value="expert">Expert</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-center flex-wrap">
                     <button class="btn btn-secondary" id="generateMaze">Generate New Maze</button>
                     <button class="btn btn-primary" id="startSolver">Start Solver</button>
                     <button class="btn btn-danger" id="resetSolver">Reset</button>
