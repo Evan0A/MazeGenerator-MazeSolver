@@ -1,4 +1,4 @@
-Auto create Maze, and auto solve a Maze
+"Auto create Maze, and auto solve a Maze"
 features:
 - Change Size (Max <400)
 - Change Difficulty
