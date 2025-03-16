@@ -23,6 +23,7 @@ class MazeSolver {
             cancelAnimationFrame(this.animationFrame);
         }
         this.maze.draw(this.exploredCells, this.currentPos);
+        this.updatePathButton();
     }
 
     exploreNearby() {
@@ -68,12 +69,24 @@ class MazeSolver {
     }
 
     setSpeed(speed) {
-        // Convert slider value (1-100) to milliseconds (1000-50)
-        this.speed = Math.max(50, 1000 - speed * 9.5);
+        // Convert slider value (1-100) to milliseconds (500-1)
+        this.speed = Math.max(1, 500 - speed * 5);
+    }
+
+    updatePathButton() {
+        const button = document.getElementById('showPath');
+        if (this.showingPath) {
+            button.classList.remove('btn-info');
+            button.classList.add('btn-success');
+        } else {
+            button.classList.remove('btn-success');
+            button.classList.add('btn-info');
+        }
     }
 
     togglePath() {
         this.showingPath = !this.showingPath;
+        this.updatePathButton();
         this.maze.draw(this.exploredCells, this.currentPos, this.showingPath, this.path);
     }
 

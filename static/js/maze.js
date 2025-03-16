@@ -32,15 +32,28 @@ class Maze {
             }
         }
 
-        // Create entrance and exit first
+        // Create entrance and exit paths first
         this.grid[1][0] = 0; // Entrance
         this.grid[1][1] = 0; // First cell after entrance
         this.grid[this.size - 2][this.size - 1] = 0; // Exit
         this.grid[this.size - 2][this.size - 2] = 0; // Cell before exit
 
-        // Start from the entrance
+        // Start generating from the entrance
         this.validPath = new Set([`1,1`]);
         this.carvePassages(1, 1);
+
+        // Ensure path to exit
+        if (!this.validPath.has(`${this.size-2},${this.size-2}`)) {
+            // Create a direct path to exit if needed
+            let x = this.size - 2;
+            let y = this.size - 2;
+            while (!this.validPath.has(`${y},${x}`)) {
+                this.grid[y][x] = 0;
+                this.validPath.add(`${y},${x}`);
+                if (x > 1) x--;
+                else if (y > 1) y--;
+            }
+        }
     }
 
     carvePassages(x, y) {
@@ -50,8 +63,14 @@ class Maze {
         // Prioritize direction towards exit
         let directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
         if (x < this.size - 2) {
-            // Prioritize moving right if we're far from the exit
-            directions.sort(() => (x < this.size - 4 ? -1 : 1));
+            // Prioritize moving right and down if we're far from the exit
+            directions.sort((a, b) => {
+                const [dy1, dx1] = a;
+                const [dy2, dx2] = b;
+                const distToExit1 = Math.abs((y + dy1) - (this.size - 2)) + Math.abs((x + dx1) - (this.size - 2));
+                const distToExit2 = Math.abs((y + dy2) - (this.size - 2)) + Math.abs((x + dx2) - (this.size - 2));
+                return distToExit1 - distToExit2;
+            });
         }
         this.shuffleArray(directions);
 
