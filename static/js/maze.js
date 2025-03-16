@@ -2,14 +2,13 @@ class Maze {
     constructor(size) {
         this.size = size;
         this.grid = Array(size).fill().map(() => Array(size).fill(1));
-        // Make cell size responsive based on maze size
         const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
         this.cellSize = Math.floor(maxSize / size);
         this.canvas = document.getElementById('mazeCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.setCanvasSize();
+        this.validPath = new Set(); // Track the valid path
 
-        // Add resize handler
         window.addEventListener('resize', () => {
             const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
             this.cellSize = Math.floor(maxSize / size);
@@ -33,19 +32,27 @@ class Maze {
             }
         }
 
-        // Start from top-left corner
-        this.carvePassages(1, 1);
-
-        // Create entrance and exit
+        // Create entrance and exit first
         this.grid[1][0] = 0; // Entrance
+        this.grid[1][1] = 0; // First cell after entrance
         this.grid[this.size - 2][this.size - 1] = 0; // Exit
+        this.grid[this.size - 2][this.size - 2] = 0; // Cell before exit
+
+        // Start from the entrance
+        this.validPath = new Set([`1,1`]);
+        this.carvePassages(1, 1);
     }
 
     carvePassages(x, y) {
         this.grid[y][x] = 0;
+        this.validPath.add(`${y},${x}`);
 
-        // Directions: right, down, left, up
-        const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+        // Prioritize direction towards exit
+        let directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+        if (x < this.size - 2) {
+            // Prioritize moving right if we're far from the exit
+            directions.sort(() => (x < this.size - 4 ? -1 : 1));
+        }
         this.shuffleArray(directions);
 
         for (let [dy, dx] of directions) {
@@ -53,7 +60,9 @@ class Maze {
             const newX = x + dx;
 
             if (this.isValid(newY, newX) && this.grid[newY][newX] === 1) {
+                // Create path between cells
                 this.grid[y + dy/2][x + dx/2] = 0;
+                this.validPath.add(`${y + dy/2},${x + dx/2}`);
                 this.carvePassages(newX, newY);
             }
         }
@@ -70,7 +79,7 @@ class Maze {
         }
     }
 
-    draw(exploredCells = null, currentPos = null) {
+    draw(exploredCells = null, currentPos = null, showPath = false, path = []) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw maze
@@ -93,23 +102,68 @@ class Maze {
             }
         }
 
+        // Draw path if requested
+        if (showPath && path.length > 0) {
+            this.ctx.strokeStyle = 'rgba(75, 192, 192, 0.5)';
+            this.ctx.lineWidth = Math.max(2, this.cellSize / 4);
+            this.ctx.beginPath();
+            path.forEach((pos, index) => {
+                const x = pos.x * this.cellSize + this.offset + this.cellSize/2;
+                const y = pos.y * this.cellSize + this.offset + this.cellSize/2;
+                if (index === 0) this.ctx.moveTo(x, y);
+                else this.ctx.lineTo(x, y);
+            });
+            this.ctx.stroke();
+        }
+
         // Draw entrance and exit
         this.ctx.fillStyle = '#28a745';
         this.ctx.fillRect(0 + this.offset, this.cellSize + this.offset, this.cellSize, this.cellSize);
         this.ctx.fillStyle = '#dc3545';
         this.ctx.fillRect((this.size - 1) * this.cellSize + this.offset, (this.size - 2) * this.cellSize + this.offset, this.cellSize, this.cellSize);
 
-        // Draw current position
+        // Draw current position with cube effect
         if (currentPos) {
+            const x = currentPos.x * this.cellSize + this.offset;
+            const y = currentPos.y * this.cellSize + this.offset;
+            const size = this.cellSize * 0.8;
+
+            // Draw cube shadow
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + size/2, y + size);
+            this.ctx.lineTo(x + size, y + size * 0.75);
+            this.ctx.lineTo(x + size/2, y + size/2);
+            this.ctx.lineTo(x, y + size * 0.75);
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            // Draw cube top
             this.ctx.fillStyle = '#007bff';
             this.ctx.beginPath();
-            this.ctx.arc(
-                currentPos.x * this.cellSize + this.offset + this.cellSize/2,
-                currentPos.y * this.cellSize + this.offset + this.cellSize/2,
-                this.cellSize/3,
-                0,
-                Math.PI * 2
-            );
+            this.ctx.moveTo(x + size/2, y);
+            this.ctx.lineTo(x + size, y + size * 0.25);
+            this.ctx.lineTo(x + size/2, y + size/2);
+            this.ctx.lineTo(x, y + size * 0.25);
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            // Draw cube sides
+            this.ctx.fillStyle = '#0056b3';
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + size/2, y + size/2);
+            this.ctx.lineTo(x + size, y + size * 0.25);
+            this.ctx.lineTo(x + size, y + size * 0.75);
+            this.ctx.lineTo(x + size/2, y + size);
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + size/2, y + size/2);
+            this.ctx.lineTo(x, y + size * 0.25);
+            this.ctx.lineTo(x, y + size * 0.75);
+            this.ctx.lineTo(x + size/2, y + size);
+            this.ctx.closePath();
             this.ctx.fill();
         }
     }
@@ -120,7 +174,7 @@ let maze;
 document.addEventListener('DOMContentLoaded', () => {
     const size = parseInt(document.getElementById('mazeSize').value);
     maze = new Maze(size);
-    window.maze = maze; // Make maze globally accessible
+    window.maze = maze;
     maze.generate();
     maze.draw();
 

@@ -29,10 +29,14 @@
                     <button class="btn btn-secondary" id="generateMaze">Generate New Maze</button>
                     <button class="btn btn-primary" id="startSolver">Start Solver</button>
                     <button class="btn btn-danger" id="resetSolver">Reset</button>
+                    <button class="btn btn-info" id="showPath">Show Path</button>
                 </div>
 
                 <div class="mt-3">
-                    <label for="solverSpeed" class="form-label">Solver Speed</label>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label for="solverSpeed" class="form-label mb-0">Solver Speed</label>
+                        <small class="text-muted">Faster ← → Slower</small>
+                    </div>
                     <input type="range" class="form-range" id="solverSpeed" min="1" max="100" value="50">
                 </div>
             </div>
@@ -41,5 +45,12 @@
 
     <script src="{{ url_for('static', filename='js/maze.js') }}"></script>
     <script src="{{ url_for('static', filename='js/solver.js') }}"></script>
+    <script>
+        document.getElementById('showPath').addEventListener('click', () => {
+            if (window.solver) {
+                window.solver.togglePath();
+            }
+        });
+    </script>
 </body>
 </html>

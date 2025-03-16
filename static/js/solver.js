@@ -9,6 +9,7 @@ class MazeSolver {
         this.deadEnds = new Set(); // Track dead ends
         this.speed = 50; // Default speed (milliseconds between moves)
         this.lastMove = 0; // Last move timestamp
+        this.showingPath = false;
     }
 
     reset() {
@@ -17,6 +18,7 @@ class MazeSolver {
         this.path = [];
         this.deadEnds = new Set();
         this.isRunning = false;
+        this.showingPath = false;
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
@@ -38,6 +40,17 @@ class MazeSolver {
         const moves = [];
         const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
+        // Sort directions to prioritize moving right and down (towards exit)
+        directions.sort((a, b) => {
+            const [dy1, dx1] = a;
+            const [dy2, dx2] = b;
+            const distToExit1 = Math.abs((this.currentPos.y + dy1) - (this.maze.size - 2)) + 
+                               Math.abs((this.currentPos.x + dx1) - (this.maze.size - 1));
+            const distToExit2 = Math.abs((this.currentPos.y + dy2) - (this.maze.size - 2)) + 
+                               Math.abs((this.currentPos.x + dx2) - (this.maze.size - 1));
+            return distToExit1 - distToExit2;
+        });
+
         for (let [dy, dx] of directions) {
             const newY = this.currentPos.y + dy;
             const newX = this.currentPos.x + dx;
@@ -55,8 +68,13 @@ class MazeSolver {
     }
 
     setSpeed(speed) {
-        // Convert slider value (1-100) to milliseconds (200-0)
-        this.speed = Math.max(0, 200 - speed * 2);
+        // Convert slider value (1-100) to milliseconds (1000-50)
+        this.speed = Math.max(50, 1000 - speed * 9.5);
+    }
+
+    togglePath() {
+        this.showingPath = !this.showingPath;
+        this.maze.draw(this.exploredCells, this.currentPos, this.showingPath, this.path);
     }
 
     async start() {
@@ -84,8 +102,8 @@ class MazeSolver {
         );
 
         if (filteredMoves.length > 0) {
-            // Choose a random valid move
-            const nextMove = filteredMoves[Math.floor(Math.random() * filteredMoves.length)];
+            // Choose move closest to exit
+            const nextMove = filteredMoves[0];
             this.path.push(this.currentPos);
             this.currentPos = nextMove;
         } else {
@@ -110,7 +128,7 @@ class MazeSolver {
         }
 
         // Draw current state
-        this.maze.draw(this.exploredCells, this.currentPos);
+        this.maze.draw(this.exploredCells, this.currentPos, this.showingPath, this.path);
 
         // Continue solving
         this.animationFrame = requestAnimationFrame((ts) => this.solve(ts));
