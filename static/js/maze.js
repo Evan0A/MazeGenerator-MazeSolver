@@ -2,14 +2,24 @@ class Maze {
     constructor(size) {
         this.size = size;
         this.grid = Array(size).fill().map(() => Array(size).fill(1));
-        this.cellSize = 20;
+        // Make cell size responsive based on maze size
+        const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
+        this.cellSize = Math.floor(maxSize / size);
         this.canvas = document.getElementById('mazeCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.setCanvasSize();
+
+        // Add resize handler
+        window.addEventListener('resize', () => {
+            const maxSize = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.8);
+            this.cellSize = Math.floor(maxSize / size);
+            this.setCanvasSize();
+            this.draw();
+        });
     }
 
     setCanvasSize() {
-        const padding = 40;
+        const padding = Math.max(40, Math.floor(this.cellSize * 2));
         this.canvas.width = this.size * this.cellSize + padding;
         this.canvas.height = this.size * this.cellSize + padding;
         this.offset = padding / 2;
@@ -25,7 +35,7 @@ class Maze {
 
         // Start from top-left corner
         this.carvePassages(1, 1);
-        
+
         // Create entrance and exit
         this.grid[1][0] = 0; // Entrance
         this.grid[this.size - 2][this.size - 1] = 0; // Exit
@@ -62,7 +72,7 @@ class Maze {
 
     draw(exploredCells = null, currentPos = null) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         // Draw maze
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {

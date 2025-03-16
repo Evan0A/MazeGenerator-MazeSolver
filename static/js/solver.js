@@ -6,12 +6,16 @@ class MazeSolver {
         this.path = [];
         this.isRunning = false;
         this.animationFrame = null;
+        this.deadEnds = new Set(); // Track dead ends
+        this.speed = 50; // Default speed (milliseconds between moves)
+        this.lastMove = 0; // Last move timestamp
     }
 
     reset() {
         this.currentPos = { x: 0, y: 1 };
         this.exploredCells = new Set(['1,0', '1,1']);
         this.path = [];
+        this.deadEnds = new Set();
         this.isRunning = false;
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
@@ -33,19 +37,26 @@ class MazeSolver {
     getValidMoves() {
         const moves = [];
         const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-        
+
         for (let [dy, dx] of directions) {
             const newY = this.currentPos.y + dy;
             const newX = this.currentPos.x + dx;
-            
+            const moveKey = `${newY},${newX}`;
+
             if (newY >= 0 && newY < this.maze.size && 
                 newX >= 0 && newX < this.maze.size && 
-                this.maze.grid[newY][newX] === 0) {
+                this.maze.grid[newY][newX] === 0 &&
+                !this.deadEnds.has(moveKey)) {
                 moves.push({ x: newX, y: newY });
             }
         }
-        
+
         return moves;
+    }
+
+    setSpeed(speed) {
+        // Convert slider value (1-100) to milliseconds (200-0)
+        this.speed = Math.max(0, 200 - speed * 2);
     }
 
     async start() {
@@ -54,12 +65,19 @@ class MazeSolver {
         this.solve();
     }
 
-    solve() {
+    solve(timestamp) {
         if (!this.isRunning) return;
+
+        // Control animation speed
+        if (timestamp - this.lastMove < this.speed) {
+            this.animationFrame = requestAnimationFrame((ts) => this.solve(ts));
+            return;
+        }
+        this.lastMove = timestamp;
 
         this.exploreNearby();
         const moves = this.getValidMoves();
-        
+
         // Remove moves that lead back to previous positions
         const filteredMoves = moves.filter(move => 
             !this.path.some(pos => pos.x === move.x && pos.y === move.y)
@@ -70,9 +88,19 @@ class MazeSolver {
             const nextMove = filteredMoves[Math.floor(Math.random() * filteredMoves.length)];
             this.path.push(this.currentPos);
             this.currentPos = nextMove;
-        } else if (this.path.length > 0) {
-            // Backtrack
-            this.currentPos = this.path.pop();
+        } else {
+            // Mark current position as dead end
+            const currentKey = `${this.currentPos.y},${this.currentPos.x}`;
+            this.deadEnds.add(currentKey);
+
+            if (this.path.length > 0) {
+                // Backtrack
+                this.currentPos = this.path.pop();
+            } else {
+                // No more moves available
+                this.isRunning = false;
+                return;
+            }
         }
 
         // Check if reached the exit
@@ -85,7 +113,7 @@ class MazeSolver {
         this.maze.draw(this.exploredCells, this.currentPos);
 
         // Continue solving
-        this.animationFrame = requestAnimationFrame(() => this.solve());
+        this.animationFrame = requestAnimationFrame((ts) => this.solve(ts));
     }
 }
 
@@ -96,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startSolver').addEventListener('click', () => {
         if (!solver) {
             solver = new MazeSolver(maze);
-            window.solver = solver; // Make solver globally accessible
+            window.solver = solver;
         }
         solver.start();
     });
@@ -106,4 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
             solver.reset();
         }
     });
+
+    // Add speed control event listener
+    const speedControl = document.getElementById('solverSpeed');
+    if (speedControl) {
+        speedControl.addEventListener('input', (e) => {
+            if (solver) {
+                solver.setSpeed(parseInt(e.target.value));
+            }
+        });
+    }
 });
