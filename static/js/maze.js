@@ -120,12 +120,14 @@ let maze;
 document.addEventListener('DOMContentLoaded', () => {
     const size = parseInt(document.getElementById('mazeSize').value);
     maze = new Maze(size);
+    window.maze = maze; // Make maze globally accessible
     maze.generate();
     maze.draw();
 
     document.getElementById('generateMaze').addEventListener('click', () => {
         const size = parseInt(document.getElementById('mazeSize').value);
         maze = new Maze(size);
+        window.maze = maze;
         maze.generate();
         maze.draw();
         if (window.solver) {

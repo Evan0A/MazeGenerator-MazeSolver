@@ -122,8 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let solver;
 
     document.getElementById('startSolver').addEventListener('click', () => {
-        if (!solver) {
-            solver = new MazeSolver(maze);
+        if (!window.maze) return; // Ensure maze exists
+        if (!solver || solver.maze !== window.maze) {
+            solver = new MazeSolver(window.maze);
             window.solver = solver;
         }
         solver.start();
