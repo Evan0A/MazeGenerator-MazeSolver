@@ -22,7 +22,8 @@ class MazeSolver {
         if (this.animationFrame) {
             cancelAnimationFrame(this.animationFrame);
         }
-        this.maze.draw(this.exploredCells, this.currentPos);
+        // Draw maze without fog of war
+        this.maze.draw(null, this.currentPos, this.showingPath, this.path);
         this.updatePathButton();
     }
 
@@ -87,12 +88,14 @@ class MazeSolver {
     togglePath() {
         this.showingPath = !this.showingPath;
         this.updatePathButton();
-        this.maze.draw(this.exploredCells, this.currentPos, this.showingPath, this.path);
+        this.maze.draw(this.isRunning ? this.exploredCells : null, this.currentPos, this.showingPath, this.path);
     }
 
     async start() {
         if (this.isRunning) return;
         this.isRunning = true;
+        // Reset explored cells when starting
+        this.exploredCells = new Set(['1,0', '1,1']);
         this.solve();
     }
 
