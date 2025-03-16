@@ -29,7 +29,8 @@
                     <button class="btn btn-secondary" id="generateMaze">Generate New Maze</button>
                     <button class="btn btn-primary" id="startSolver">Start Solver</button>
                     <button class="btn btn-danger" id="resetSolver">Reset</button>
-                    <button class="btn btn-info" id="showPath">Show Path</button>
+                    <button class="btn btn-danger" id="showPath">Show Path</button>
+                    <button class="btn btn-danger" id="recordMaze">Record Maze</button>
                 </div>
 
                 <div class="mt-3">
@@ -45,11 +46,30 @@
 
     <script src="{{ url_for('static', filename='js/maze.js') }}"></script>
     <script src="{{ url_for('static', filename='js/solver.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/recorder.js') }}"></script>
     <script>
-        document.getElementById('showPath').addEventListener('click', () => {
-            if (window.solver) {
-                window.solver.togglePath();
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            let recorder = null;
+
+            document.getElementById('showPath').addEventListener('click', () => {
+                if (window.solver) {
+                    window.solver.togglePath();
+                }
+            });
+
+            document.getElementById('recordMaze').addEventListener('click', () => {
+                if (!recorder && window.maze) {
+                    recorder = new MazeRecorder(window.maze);
+                }
+
+                if (recorder) {
+                    if (!recorder.isRecording) {
+                        recorder.startRecording();
+                    } else {
+                        recorder.stopRecording();
+                    }
+                }
+            });
         });
     </script>
 </body>

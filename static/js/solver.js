@@ -69,18 +69,18 @@ class MazeSolver {
     }
 
     setSpeed(speed) {
-        // Convert slider value (1-100) to milliseconds (500-1)
-        this.speed = Math.max(1, 500 - speed * 5);
+        // Convert slider value (1-100) to milliseconds (200-1)
+        this.speed = Math.max(1, 200 - speed * 2);
     }
 
     updatePathButton() {
         const button = document.getElementById('showPath');
         if (this.showingPath) {
-            button.classList.remove('btn-info');
+            button.classList.remove('btn-danger');
             button.classList.add('btn-success');
         } else {
             button.classList.remove('btn-success');
-            button.classList.add('btn-info');
+            button.classList.add('btn-danger');
         }
     }
 
