@@ -1,6 +1,6 @@
 [project]
 name = "Maze Generator & Maze Solver"
-version = "1.0.0"
+version = "0.1.0"
 description = "."
 requires-python = ">=3.11"
 dependencies = [
